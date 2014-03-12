@@ -12,19 +12,16 @@ module StarkParameters
   end
 
   def params
-    @params = permitted_params.merge(required_params)
+    make_strong_parameter(permitted_params.merge(required_params))
   end
 
   private
 
   def permitted_params
     self.class.permitted_params.each_with_object({}) do |permitted_param, hash|
-      param_key = if permitted_param.is_a? Hash
-       permitted_param.keys.first
-      else
-        permitted_param
-      end
-      hash[(self.class.aliases[param_key] || param_key).to_s] = @params.permit(permitted_param).values.first
+      param_key = permitted_param.is_a?(Hash) ? permitted_param.keys.first : permitted_param
+      permitted_value = @params.permit(permitted_param).values.first
+      hash[(self.class.aliases[param_key] || param_key).to_s] = permitted_value if permitted_value
     end
   end
 
