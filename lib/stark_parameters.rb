@@ -1,5 +1,9 @@
-module StarkParameters
+require "active_support/all"
+require "rack"
+require "rack/test"
+require "action_controller/metal/strong_parameters"
 
+module StarkParameters
   def self.included(klass)
     klass.send :extend, ClassMethods
     klass.required_params = []
@@ -14,7 +18,7 @@ module StarkParameters
   end
 
   def params
-    make_strong_parameter(permitted_params.merge(required_params))
+    make_strong_parameter(permitted_params.merge(required_params)).permit!
   end
 
   private
