@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'stark_parameters/version'
 
 Gem::Specification.new do |gem|
-  gem.name          = "stark parameters"
+  gem.name          = "stark_parameters"
   gem.version       = StarkParameters::VERSION
   gem.authors       = ["rylev"]
   gem.email         = ["ryan.levick@gmail.com"]
