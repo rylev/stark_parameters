@@ -7,8 +7,10 @@ module StarkParameters
     klass.aliases = {}
   end
 
-  def initialize(params)
-    @params = make_strong_parameter(params)
+  def initialize(*params)
+    @params = params.each_with_object(make_strong_parameter({})) do |p, hash|
+      hash.merge!(make_strong_parameter(p))
+    end
   end
 
   def params

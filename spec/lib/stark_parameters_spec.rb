@@ -49,4 +49,10 @@ describe StarkParameters do
     it { expect{ validator.params }.to_not raise_error }
     it { expect(validator.params.to_hash.keys).to_not include("author") }
   end
+
+  context "with multiple params" do
+    let(:validator) { test_klass.new(full_params.except("name"), {"name" => "Ryan"}) }
+
+    it { expect(validator.params.to_hash).to include("name" => "Ryan") }
+  end
 end
