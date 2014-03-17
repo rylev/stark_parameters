@@ -45,6 +45,34 @@ describe StarkParameters do
     it { expect{ validator.params }.to raise_error(ActionController::ParameterMissing) }
   end
 
+  context "when required param is nil" do
+    let(:params) { full_params["name"] = nil; full_params  }
+
+    it { expect{ validator.params }.to raise_error(ActionController::ParameterMissing) }
+  end
+
+  describe "required param presence: true" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
+
+        require :name, allow_nil: true
+      end
+    end
+
+    context "when param is missing" do
+      let(:params) { {} }
+
+      it { expect{ validator.params }.to raise_error(ActionController::ParameterMissing) }
+    end
+
+    context "when param is nil" do
+      let(:params) { {"name" => nil} }
+
+      it { expect(validator.params).to eql(params) }
+    end
+  end
+
   context "when permitted param is missing" do
     let(:params) { full_params.except("author")  }
 
