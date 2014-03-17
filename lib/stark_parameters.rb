@@ -6,8 +6,9 @@ require "action_controller/metal/strong_parameters"
 module StarkParameters
   def self.included(klass)
     klass.send :extend, ClassMethods
-    klass.required_params = []
     klass.permitted_params = []
+    klass.presence_required_params = []
+    klass.presence_optional_params = []
     klass.aliases = {}
   end
 
@@ -32,10 +33,15 @@ module StarkParameters
   end
 
   def required_params
-    self.class.required_params.each_with_object({}) do |required_params, hash|
+    presence_required_params = self.class.presence_required_params.each_with_object({}) do |required_params, hash|
       param_key = require_one(required_params)
       hash[(self.class.aliases[param_key] || param_key).to_s] = @params[param_key]
     end
+    presence_optional_params =  self.class.presence_optional_params.each_with_object({}) do |required_params, hash|
+      param_key = require_one(required_params, true)
+      hash[(self.class.aliases[param_key] || param_key).to_s] = @params[param_key]
+    end
+    presence_required_params.merge(presence_optional_params)
   end
 
 
@@ -44,23 +50,28 @@ module StarkParameters
     ActionController::Parameters.new(hash)
   end
 
-  def require_one(to_require)
+  def require_one(to_require, allow_nil = false)
     present_param = to_require.detect {|p| @params.include?(p) }
-    unless present_param
+    value_presence_valid = allow_nil ? true : !@params.stringify_keys[present_param.to_s].nil?
+    unless present_param && value_presence_valid
       raise ActionController::ParameterMissing.new(to_require.join(" or "))
     end
     present_param
   end
 
   module ClassMethods
-    attr_accessor :required_params, :permitted_params, :aliases
+    attr_accessor :permitted_params, :presence_required_params, :presence_optional_params, :aliases
 
     def require(required_params, options = {})
       required_params = Array(required_params)
       if new_name = options[:as]
         required_params.each { |rp| @aliases[rp] = new_name }
       end
-      @required_params.push required_params
+      if options[:allow_nil]
+        @presence_optional_params.push required_params
+      else
+        @presence_required_params.push required_params
+      end
     end
 
     def permit(permitted_param, options = {})
