@@ -10,6 +10,7 @@ describe StarkParameters do
       require :email, as: :login
       permit  author: [:id, :name]
       permit  :password, as: :pword
+      permit  :awesome
       require [:last_name, :surname]
     end
   end
@@ -78,6 +79,13 @@ describe StarkParameters do
 
     it { expect{ validator.params }.to_not raise_error }
     it { expect(validator.params.to_hash.keys).to_not include("author") }
+  end
+
+  context "when permitted param is false" do
+    let(:params) { full_params.merge("awesome" => false)  }
+
+    it { expect{ validator.params }.to_not raise_error }
+    it { expect(validator.params.to_hash.keys).to include("awesome") }
   end
 
   context "with multiple params" do
