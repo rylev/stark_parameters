@@ -51,12 +51,15 @@ module StarkParameters
   end
 
   def require_one(to_require, allow_nil = false)
-    present_param = to_require.detect {|p| @params.include?(p) }
-    value_presence_valid = allow_nil ? true : !@params.stringify_keys[present_param.to_s].nil?
-    unless present_param && value_presence_valid
+    present_param = to_require.detect {|p| @params.include?(p) && (allow_nil || !@params[p].nil?) }
+    unless present_param && value_presence_valid(present_param, allow_nil)
       raise ActionController::ParameterMissing.new(to_require.join(" or "))
     end
     present_param
+  end
+
+  def value_presence_valid(present_param, allow_nil)
+    allow_nil ? true : !@params.stringify_keys[present_param.to_s].nil?
   end
 
   module ClassMethods

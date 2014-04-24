@@ -47,9 +47,9 @@ describe StarkParameters do
   end
 
   context "when required param is nil" do
-    let(:params) { full_params["name"] = nil; full_params  }
+    let(:params) { full_params["last_name"] = nil; full_params  }
 
-    it { expect{ validator.params }.to raise_error(ActionController::ParameterMissing) }
+    it { expect(validator.params.to_hash).to include("surname" => "Levick") }
   end
 
   describe "required param presence: true" do
