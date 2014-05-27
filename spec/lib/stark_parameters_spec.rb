@@ -8,7 +8,6 @@ describe StarkParameters do
       require :name
       require :id
       require :email, as: :login
-      permit  author: [:id, :name]
       permit  :password, as: :pword
       permit  :awesome
       require [:last_name, :surname]
@@ -21,8 +20,7 @@ describe StarkParameters do
       "name" => "Ryan",
       "email" => "ryan@6wunderkinder.com",
       "password" => "fdsafdsa",
-      "surname" => "Levick",
-      "author" => { "id" => 1, "name" => "Steve", "surname" => "Dudeman" }
+      "surname" => "Levick"
     }
   end
 
@@ -33,7 +31,6 @@ describe StarkParameters do
 
     it { expect(validator.params.to_hash).to include("name" => "Ryan") }
     it { expect(validator.params.to_hash).to include("surname" => "Levick") }
-    it { expect(validator.params.to_hash).to include("author" => { "id" => 1, "name" => "Steve" }) }
     it { expect(validator.params.to_hash).to include("login" => "ryan@6wunderkinder.com") }
     it { expect(validator.params.to_hash.keys).to_not include("email") }
 
@@ -74,11 +71,31 @@ describe StarkParameters do
     end
   end
 
-  context "when permitted param is missing" do
-    let(:params) { full_params.except("author")  }
+  context "nested permitted params" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
 
-    it { expect{ validator.params }.to_not raise_error }
-    it { expect(validator.params.to_hash.keys).to_not include("author") }
+        permit author: [:name, :surname]
+      end
+    end
+    let(:params) {{"author" => {"name" => "Ryan", "surname" => "Levick", "age" => 25}} }
+
+    it { expect(validator.params.to_hash).to include("author" => {"name"  => "Ryan", "surname" => "Levick"}) }
+  end
+
+  context "when permitted param is missing" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
+
+        permit :name
+        permit :age
+      end
+    end
+    let(:params) {{ "surname" => "Levick", "age" => 25 }}
+
+    it { expect(validator.params.to_hash).to include({"age" => 25}) }
   end
 
   context "when permitted param is false" do
@@ -89,9 +106,9 @@ describe StarkParameters do
   end
 
   context "with multiple params" do
-    let(:validator) { test_klass.new(full_params.except("name"), {"name" => "Ryan"}) }
+    let(:validator) { test_klass.new(full_params.except("name"), {"name" => "Steve"}) }
 
-    it { expect(validator.params.to_hash).to include("name" => "Ryan") }
+    it { expect(validator.params.to_hash).to include("name" => "Steve") }
   end
 
   context "with default values provided by methods" do

@@ -12,6 +12,8 @@ module StarkParameters
     klass.aliases = {}
   end
 
+  attr_reader :params
+
   def initialize(*params)
     @params = params.reduce(make_strong_parameter({})) do |hash, param|
       hash.merge(make_strong_parameter(param))
