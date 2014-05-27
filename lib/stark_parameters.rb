@@ -13,53 +13,62 @@ module StarkParameters
   end
 
   def initialize(*params)
-    @params = params.each_with_object(make_strong_parameter({})) do |p, hash|
-      hash.merge!(make_strong_parameter(p))
+    @params = params.reduce(make_strong_parameter({})) do |hash, param|
+      hash.merge(make_strong_parameter(param))
     end
   end
 
   def params
-    make_strong_parameter(permitted_params.merge(required_params)).permit!
+    all_params = permitted_params.merge(required_params)
+    make_strong_parameter(all_params).permit!
   end
 
   private
 
   def permitted_params
     self.class.permitted_params.each_with_object({}) do |permitted_param, hash|
-      param_key = permitted_param.is_a?(Hash) ? permitted_param.keys.first : permitted_param
-      permitted_value = @params.permit(permitted_param).values.first
-      hash[(self.class.aliases[param_key] || param_key).to_s] = permitted_value unless permitted_value.nil?
+      permitted_key = permitted_param.is_a?(Hash) ? permitted_param.keys.first : permitted_param
+      name = self.class.aliases[permitted_key] || permitted_key
+      permitted_value = respond_to?(name) ? send(name) : @params.permit(permitted_param)[name]
+      hash[name] = permitted_value unless permitted_value.nil?
     end
   end
 
   def required_params
-    presence_required_params = self.class.presence_required_params.each_with_object({}) do |required_params, hash|
-      param_key = require_one(required_params)
-      hash[(self.class.aliases[param_key] || param_key).to_s] = @params[param_key]
-    end
-    presence_optional_params =  self.class.presence_optional_params.each_with_object({}) do |required_params, hash|
-      param_key = require_one(required_params, true)
-      hash[(self.class.aliases[param_key] || param_key).to_s] = @params[param_key]
-    end
     presence_required_params.merge(presence_optional_params)
   end
 
+  def presence_optional_params
+    collect_required_params(self.class.presence_optional_params, true)
+  end
+
+  def presence_required_params
+    collect_required_params(self.class.presence_required_params, false)
+  end
+
+  def collect_required_params(keys, allow_nil)
+    keys.each_with_object({}) do |required_params, hash|
+      required_key = require_one(required_params, allow_nil)
+
+      key = self.class.aliases[required_key] || required_key
+      value = respond_to?(key) ? send(key) : @params[required_key]
+      hash[key] = value
+    end
+  end
 
   def make_strong_parameter(hash)
     return hash if hash.is_a? ActionController::Parameters
     ActionController::Parameters.new(hash)
   end
 
-  def require_one(to_require, allow_nil = false)
-    present_param = to_require.detect {|p| @params.include?(p) && (allow_nil || !@params[p].nil?) }
-    unless present_param && value_presence_valid(present_param, allow_nil)
+  def require_one(to_require, allow_nil)
+    present_param = to_require.detect{|k| respond_to?(k)} ||
+              to_require.detect {|k| @params.include?(k) && (allow_nil || @params[k]) }
+
+    unless present_param
       raise ActionController::ParameterMissing.new(to_require.join(" or "))
     end
     present_param
-  end
-
-  def value_presence_valid(present_param, allow_nil)
-    allow_nil ? true : !@params.stringify_keys[present_param.to_s].nil?
   end
 
   module ClassMethods
@@ -78,14 +87,9 @@ module StarkParameters
     end
 
     def permit(permitted_param, options = {})
+      permitted_key = permitted_param.is_a?(Hash) ? permitted_param.keys.first : permitted_param
       if new_name = options[:as]
-        param_key = if permitted_param.is_a? Hash
-          permitted_param.keys.first
-        else
-          permitted_param
-        end
-
-        @aliases[param_key] = new_name
+        @aliases[permitted_key] = new_name
       end
       @permitted_params.push permitted_param
     end

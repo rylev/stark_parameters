@@ -22,7 +22,7 @@ describe StarkParameters do
       "email" => "ryan@6wunderkinder.com",
       "password" => "fdsafdsa",
       "surname" => "Levick",
-      "author" => { "id" => 1, "name" => "Steve" }
+      "author" => { "id" => 1, "name" => "Steve", "surname" => "Dudeman" }
     }
   end
 
@@ -92,5 +92,22 @@ describe StarkParameters do
     let(:validator) { test_klass.new(full_params.except("name"), {"name" => "Ryan"}) }
 
     it { expect(validator.params.to_hash).to include("name" => "Ryan") }
+  end
+
+  context "with default values provided by methods" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
+
+        require :foo
+
+        def foo
+          "bar"
+        end
+      end
+    end
+
+    let(:validator) { test_klass.new({}) }
+    it { expect(validator.params.to_hash).to include("foo" => "bar") }
   end
 end
