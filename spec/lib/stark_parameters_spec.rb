@@ -127,4 +127,17 @@ describe StarkParameters do
     let(:validator) { test_klass.new({}) }
     it { expect(validator.params.to_hash).to include("foo" => "bar") }
   end
+
+  context "with empty permitted value" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
+
+        permit :foo
+      end
+    end
+
+    let(:validator) { test_klass.new({foo: nil}) }
+    it { expect(validator.params.to_hash).to include("foo" => nil) }
+  end
 end
