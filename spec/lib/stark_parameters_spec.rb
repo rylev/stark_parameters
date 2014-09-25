@@ -34,7 +34,7 @@ describe StarkParameters do
     it { expect(validator.params.to_hash).to include("login" => "ryan@6wunderkinder.com") }
     it { expect(validator.params.to_hash.keys).to_not include("email") }
 
-    it { expect(validator.params.permitted?).to be_true }
+    it { expect(validator.params.permitted?).to be(true) }
   end
 
   context "when required param is missing" do
