@@ -32,7 +32,7 @@ module StarkParameters
       permitted_key = permitted_param.is_a?(Hash) ? permitted_param.keys.first : permitted_param
       name = self.class.aliases[permitted_key] || permitted_key
       permitted_value = respond_to?(name) ? send(name) : @params.permit(permitted_param)[name]
-      hash[name] = permitted_value if @params.has_key?(permitted_key)
+      hash[name] = permitted_value if (@params.has_key?(permitted_key) || respond_to?(name))
     end
   end
 

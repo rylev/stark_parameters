@@ -34,7 +34,7 @@ describe StarkParameters do
     it { expect(validator.params.to_hash).to include("login" => "ryan@6wunderkinder.com") }
     it { expect(validator.params.to_hash.keys).to_not include("email") }
 
-    it { expect(validator.params.permitted?).to be_true }
+    it { expect(validator.params.permitted?).to eq(true) }
   end
 
   context "when required param is missing" do
@@ -111,12 +111,29 @@ describe StarkParameters do
     it { expect(validator.params.to_hash).to include("name" => "Steve") }
   end
 
-  context "with default values provided by methods" do
+  context "with default values provided by methods for required keys" do
     let(:test_klass) do
       Class.new do
         include StarkParameters
 
         require :foo
+
+        def foo
+          "bar"
+        end
+      end
+    end
+
+    let(:validator) { test_klass.new({}) }
+    it { expect(validator.params.to_hash).to include("foo" => "bar") }
+  end
+
+  context "with default values provided by methods for permitted keys" do
+    let(:test_klass) do
+      Class.new do
+        include StarkParameters
+
+        permit :foo
 
         def foo
           "bar"
